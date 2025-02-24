@@ -22,8 +22,7 @@ spec:
       shareProcessNamespace: true
       volumes:
         - name: shared-volume
-          persistentVolumeClaim:
-            claimName: shared-volume-claim
+          emptyDir: {}
       initContainers:
         - name: create-volume
           image: core-sqs-worker:latest

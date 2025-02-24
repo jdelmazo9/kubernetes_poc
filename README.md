@@ -1,6 +1,6 @@
 # Kubernetes Shared Volume POC
 
-This proof of concept demonstrates a multi-container deployment in Kubernetes using a shared persistent volume. The system consists of three components that work together to showcase container communication and process management:
+This proof of concept demonstrates a multi-container deployment in Kubernetes using a shared emptyDir volume. The system consists of three components that work together to showcase container communication and process management:
 
 1. An init container that creates initial data
 2. A main worker that reads and displays data
@@ -9,7 +9,7 @@ This proof of concept demonstrates a multi-container deployment in Kubernetes us
 
 ## Architecture
 
-The system uses a shared volume to facilitate communication between containers:
+The system uses an emptyDir volume to facilitate communication between containers:
 
 1. Init Container
    - Runs first
@@ -26,7 +26,7 @@ The system uses a shared volume to facilitate communication between containers:
    - Monitors worker process
    - Manages worker lifecycle
 
-This architecture demonstrates how to manage stateful applications in Kubernetes while maintaining container isolation and proper process management.
+This architecture demonstrates how to manage ephemeral data sharing between containers in Kubernetes while maintaining container isolation and proper process management.
 
 ## Prerequisites
 
@@ -51,22 +51,17 @@ This architecture demonstrates how to manage stateful applications in Kubernetes
    docker build -t core-sqs-worker:latest .
    ```
 
-4. Create the Persistent Volume Claim:
-   ```bash
-   kubectl apply -f pvc.yaml
-   ```
-
-5. Deploy the application:
+4. Deploy the application:
    ```bash
    kubectl apply -f deployment.yaml
    ```
 
-6. Monitor the pods:
+5. Monitor the pods:
    ```bash
    kubectl get pods
    ```
 
-7. Check the logs:
+6. Check the logs:
    ```bash
    # For the worker container
    kubectl logs <pod-name> core-sqs-worker
@@ -89,7 +84,6 @@ This architecture demonstrates how to manage stateful applications in Kubernetes
 To remove all resources:
 ```bash
 kubectl delete -f deployment.yaml
-kubectl delete -f pvc.yaml
 minikube stop
 ```
 
@@ -104,7 +98,6 @@ minikube stop
 ## Files Overview
 
 - `deployment.yaml`: Kubernetes deployment configuration
-- `pvc.yaml`: Persistent Volume Claim configuration
 - `create_volume.rb`: Init container script
 - `ruby_script.rb`: Worker container script
 - `watchdog_script.rb`: Watchdog container script
@@ -113,7 +106,7 @@ minikube stop
 ## Notes
 
 This POC demonstrates several Kubernetes concepts:
-- Shared persistent volumes
+- Shared volumes
 - Init containers
 - Multi-container pods
 - Process management
