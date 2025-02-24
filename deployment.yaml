@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: core-sqs-worker
+  name: core-sqs-worker
+  annotations:
+    moniker.spinnaker.io/application: core
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: core-sqs-worker
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: core-sqs-worker
+      name: core-sqs-worker
+    spec:
+      shareProcessNamespace: true
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: shared-volume-claim
+      initContainers:
+        - name: create-volume
+          image: core-sqs-worker:latest
+          imagePullPolicy: Never
+          command:
+            [
+              "ruby",
+              "create_volume.rb"
+            ]
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /shared/volume
+      containers:
+        - image: core-sqs-worker:latest
+          command:
+            [
+              "ruby",
+              "ruby_script.rb"
+            ]
+          name: core-sqs-worker
+          imagePullPolicy: Never
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /shared/volume
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - -f
+                - "ruby ruby_script.rb"
+            initialDelaySeconds: 60
+            periodSeconds: 300
+            timeoutSeconds: 3
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command:
+                - pgrep
+                - -f
+                - "ruby ruby_script.rb"
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: "1G"
+              cpu: "1"
+            limits:
+              memory: "10G"
+              cpu: "4"
+        - image: core-sqs-worker:latest
+          name: watchdog
+          imagePullPolicy: Never
+          command:
+            [
+              "ruby",
+              "watchdog_script.rb"
+            ]
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /shared/volume
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - -f
+                - "ruby watchdog_script.rb"
+            initialDelaySeconds: 60
+            periodSeconds: 300
+            timeoutSeconds: 3
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command:
+                - pgrep
+                - -f
+                - "ruby watchdog_script.rb"
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: "1G"
+              cpu: "1"
+            limits:
+              memory: "10G"
+              cpu: "4"
